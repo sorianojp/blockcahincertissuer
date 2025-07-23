@@ -1,17 +1,26 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Dashboard') }}
-        </h2>
+        <h2 class="font-semibold text-xl">{{ __('Dashboard') }}</h2>
     </x-slot>
-    <x-auth-session-status class="mb-4" :status="session('status')" />
+
+    <x-auth-session-status :status="session('status')" class="mb-4" />
     @if (session('error'))
-        <div class="alert alert-danger">{{ session('error') }}</div>
+        <div class="bg-red-100 border-red-400 text-red-700 px-4 py-3 mb-4">{{ session('error') }}</div>
     @endif
+
     <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 text-gray-900">
+        <div class="max-w-7xl mx-auto p-6 bg-white shadow rounded">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th>Name</th>
+                        <th>Program</th>
+                        <th>Date Awarded</th>
+                        <th>Issue</th>
+                        <th>On‑Chain</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
                     @foreach ($certificates as $cert)
                         <tr>
                             <td>{{ $cert->full_name }}</td>
@@ -21,27 +30,27 @@
                                 @if ($cert->status !== 'issued')
                                     <form method="POST" action="{{ route('certificates.issue', $cert->id) }}">
                                         @csrf
-                                        <button type="submit" class="btn btn-success">Issue</button>
+                                        <button class="bg-green-600 text-white px-3 py-1 rounded">Issue</button>
                                     </form>
                                 @else
-                                    ✅ Issued
+                                    <span class="bg-green-100 text-green-800 px-3 py-1 rounded">Issued</span>
                                 @endif
                             </td>
-                            <td>
+                            <td class="space-x-2">
                                 @if ($cert->status === 'issued')
                                     <a href="{{ config('services.polygonscan.base_url') }}/address/{{ config('services.polygonscan.contract') }}"
-                                        target="_blank"
-                                        class="inline-block px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700">
-                                        🔗 Verify on Chain
-                                    </a>
+                                        class="bg-blue-600 text-white px-2 py-1 rounded">🔗 Verify on Chain</a>
+                                    @if ($cert->tx_hash)
+                                        <a href="{{ config('services.polygonscan.base_url') }}/tx/{{ $cert->tx_hash }}"
+                                            class="bg-indigo-600 text-white px-2 py-1 rounded">🔍 View Tx</a>
+                                    @endif
                                 @endif
-
                             </td>
                         </tr>
                     @endforeach
-
-                </div>
-            </div>
+                </tbody>
+            </table>
+            <div class="mt-4">{{ $certificates->links() }}</div>
         </div>
     </div>
 </x-app-layout>

@@ -1,37 +1,20 @@
-require('dotenv').config();
-const axios = require('axios');
-const fs = require('fs');
-const FormData = require('form-data');
-const path = require('path');
-
-const [, , filePath] = process.argv;
-const PINATA_JWT = process.env.PINATA_JWT;
+// node/uploadPinata.js
+require('dotenv').config({ path: require('path').resolve(__dirname, '../.env'), debug: false });
+const axios = require('axios'), fs = require('fs'), FormData = require('form-data'), path = require('path');
 
 async function main() {
-    try {
-        const fileStream = fs.createReadStream(path.resolve(filePath));
-
-        const form = new FormData();
-        form.append('file', fileStream);
-
-        const response = await axios.post(
-            'https://api.pinata.cloud/pinning/pinFileToIPFS',
-            form,
-            {
-                maxBodyLength: 'Infinity',
-                headers: {
-                    'Authorization': `Bearer ${PINATA_JWT}`,
-                    ...form.getHeaders()
-                }
-            }
-        );
-
-        const cid = response.data.IpfsHash;
-        console.log('ipfs://' + cid);
-    } catch (err) {
-        console.error('Upload failed:', err.message);
-        process.exit(1);
-    }
+    const filePath = process.argv[2];
+    const jwt = process.env.PINATA_JWT;
+    const form = new FormData();
+    form.append('file', fs.createReadStream(path.resolve(filePath)));
+    const res = await axios.post('https://api.pinata.cloud/pinning/pinFileToIPFS', form, {
+        maxBodyLength: Infinity,
+        headers: { Authorization: `Bearer ${jwt}`, ...form.getHeaders() }
+    });
+    console.log('ipfs://' + res.data.IpfsHash);
 }
 
-main();
+main().catch(e => {
+    console.error('Upload failed:', e.message);
+    process.exit(1);
+});
